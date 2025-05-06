@@ -14,6 +14,8 @@ Perfect for structured meetings where each topic has a time limit. Display one t
 - Floating window stays on top (macOS and Windows)
 - Manual **Start**, **Stop**, **Skip**, and **Restart** controls
 - Displays "End" when the final topic is finished
+- Dark mode UI with prominent text and controls
+- **Optional chime** sound when each new topic begins
 
 ---
 
@@ -64,18 +66,40 @@ Q&A,120
 
 ## ▶️ Running the App
 
-Once your virtual environment is activated and `PyQt6` is installed, run:
+Basic usage:
 
 ```bash
 python agenda-script.py agenda.txt
 ```
 
-This will open a floating window that shows:
+To enable the **chime sound** on each new topic:
 
-- **Current topic**
-- **Countdown timer**
-- **Next topic**
-- **Control buttons**
+```bash
+python agenda-script.py agenda.txt --chime
+```
+
+---
+
+## 🔔 Using a Chime Sound
+
+You can use any short `.wav` sound file to play when the timer switches to a new topic.
+
+### Recommended chime
+
+Download this soft chime sound from Pixabay:  
+[https://pixabay.com/sound-effects/chime-sound-7143/](https://pixabay.com/sound-effects/chime-sound-7143/)
+
+Save the file as `chime.mp3`, then convert it to a `.wav` file.
+
+### Convert to WAV using ffmpeg (macOS/Linux/Windows):
+
+```bash
+ffmpeg -i chime.mp3 -acodec pcm_s16le -ar 44100 chime.wav
+```
+
+Place the resulting `chime.wav` file in the same folder as `agenda-script.py`.
+
+> Only `.wav` files are supported. MP3 is **not** compatible with PyQt6's audio system.
 
 ---
 
@@ -92,17 +116,10 @@ The **Skip** and **Restart** buttons only appear after starting the timer.
 
 ---
 
-## 🖥 Notes for Windows Users
-
-- The script works out of the box on Windows.
-- The always-on-top window flag is supported, but behavior may vary slightly depending on your window manager or system settings.
-
----
-
 ## 🛠 Optional Enhancements (Ideas)
 
 - Accept `MM:SS` formatted durations
-- Sound alert between agenda items
+- Sound alert between agenda items (custom files per topic)
 - Keyboard shortcuts for controls
 - Export session log of start/end times per topic
 
