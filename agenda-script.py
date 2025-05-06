@@ -4,7 +4,7 @@ import argparse
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
 )
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QTimer, Qt, QUrl
 from PyQt6.QtMultimedia import QSoundEffect
 from pathlib import Path
 
@@ -23,7 +23,8 @@ class TopicTimer(QWidget):
         self.sound = None
         if self.play_chime:
             self.sound = QSoundEffect()
-            self.sound.setSource(Path("chime.wav").resolve().as_uri())
+            sound_path = Path("chime.wav").resolve()
+            self.sound.setSource(QUrl.fromLocalFile(str(sound_path)))
             self.sound.setVolume(0.5)
 
         self.init_ui()
@@ -100,9 +101,6 @@ class TopicTimer(QWidget):
                 self.next_topic_label.setText(f"Next: {next_topic}")
             else:
                 self.next_topic_label.setText("Next: End")
-
-            if self.play_chime and self.sound:
-                self.sound.play()
         else:
             self.current_topic_label.setText("Current: End")
             self.timer_label.setText("")
@@ -148,6 +146,10 @@ class TopicTimer(QWidget):
             self.load_topic(self.current_index)
 
     def update_timer(self):
+        if self.time_remaining == 1:
+            if self.play_chime and self.sound:
+                self.sound.play()
+
         self.time_remaining -= 1
         if self.time_remaining >= 0:
             self.timer_label.setText(self.format_time(self.time_remaining))
@@ -182,7 +184,7 @@ def load_agenda_from_file(file_path):
 def main():
     parser = argparse.ArgumentParser(description="Run a timed meeting agenda.")
     parser.add_argument("agenda_file", help="Path to the agenda .txt file")
-    parser.add_argument("--chime", action="store_true", help="Play a chime when each new topic begins")
+    parser.add_argument("--chime", action="store_true", help="Play a chime when each new topic is about to begin")
     args = parser.parse_args()
 
     agenda = load_agenda_from_file(args.agenda_file)
