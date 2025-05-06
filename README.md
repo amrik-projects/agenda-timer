@@ -1,5 +1,7 @@
 # 🕒 Meeting Agenda Timer
 
+<img src="meeting_timer_screenshot.png?raw=true" width="500px"/>
+
 A lightweight, floating meeting timer app built with Python and PyQt6.
 
 Perfect for structured meetings where each topic has a time limit. Display one topic at a time with a countdown, move automatically to the next, and stay on track with a clean, always-on-top interface.
