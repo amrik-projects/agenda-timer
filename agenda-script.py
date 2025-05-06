@@ -1,20 +1,31 @@
 import sys
 import time
+import argparse
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
 )
-from PyQt6.QtCore import QTimer, Qt
+from PyQt6.QtCore import QTimer, Qt, QUrl
+from PyQt6.QtMultimedia import QSoundEffect
+from pathlib import Path
 
 
 class TopicTimer(QWidget):
-    def __init__(self, agenda):
+    def __init__(self, agenda, play_chime):
         super().__init__()
         self.agenda = agenda
         self.current_index = 0
         self.time_remaining = 0
         self.timer_running = False
+        self.play_chime = play_chime
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
+
+        self.sound = None
+        if self.play_chime:
+            self.sound = QSoundEffect()
+            sound_path = Path("chime.wav").resolve()
+            self.sound.setSource(QUrl.fromLocalFile(str(sound_path)))
+            self.sound.setVolume(0.5)
 
         self.init_ui()
         self.load_topic(0)
@@ -22,46 +33,59 @@ class TopicTimer(QWidget):
     def init_ui(self):
         self.setWindowTitle("Meeting Timer")
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
-        self.resize(400, 240)
+        self.resize(500, 280)
+
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1e1e1e;
+                color: #f0f0f0;
+            }
+            QPushButton {
+                background-color: #444;
+                color: #fff;
+                border: 1px solid #666;
+                padding: 6px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #666;
+            }
+        """)
 
         self.layout = QVBoxLayout()
 
-        # Labels first: current topic, timer, next topic
         self.current_topic_label = QLabel("", self)
         self.current_topic_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.current_topic_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        self.current_topic_label.setStyleSheet("font-size: 28px; font-weight: bold;")
         self.layout.addWidget(self.current_topic_label)
 
         self.timer_label = QLabel("", self)
         self.timer_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.timer_label.setStyleSheet("font-size: 48px;")
+        self.timer_label.setStyleSheet("font-size: 54px;")
         self.layout.addWidget(self.timer_label)
 
         self.next_topic_label = QLabel("", self)
         self.next_topic_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.next_topic_label.setStyleSheet("font-size: 16px; color: gray;")
+        self.next_topic_label.setStyleSheet("font-size: 20px; color: #bbbbbb;")
         self.layout.addWidget(self.next_topic_label)
 
-        # Buttons: initially hidden as needed
         self.skip_button = QPushButton("Skip", self)
         self.skip_button.clicked.connect(self.skip_topic)
         self.skip_button.setVisible(False)
+        self.layout.addWidget(self.skip_button)
 
         self.start_button = QPushButton("Start", self)
         self.start_button.clicked.connect(self.start_timer)
+        self.layout.addWidget(self.start_button)
 
         self.stop_button = QPushButton("Stop", self)
         self.stop_button.clicked.connect(self.stop_timer)
         self.stop_button.setVisible(False)
+        self.layout.addWidget(self.stop_button)
 
         self.restart_button = QPushButton("Restart", self)
         self.restart_button.clicked.connect(self.restart_timer)
         self.restart_button.setVisible(False)
-
-        # Buttons added after labels (bottom of layout)
-        self.layout.addWidget(self.skip_button)
-        self.layout.addWidget(self.start_button)
-        self.layout.addWidget(self.stop_button)
         self.layout.addWidget(self.restart_button)
 
         self.setLayout(self.layout)
@@ -122,6 +146,10 @@ class TopicTimer(QWidget):
             self.load_topic(self.current_index)
 
     def update_timer(self):
+        if self.time_remaining == 1:
+            if self.play_chime and self.sound:
+                self.sound.play()
+
         self.time_remaining -= 1
         if self.time_remaining >= 0:
             self.timer_label.setText(self.format_time(self.time_remaining))
@@ -154,15 +182,15 @@ def load_agenda_from_file(file_path):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python agenda-script.py agenda.txt")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="Run a timed meeting agenda.")
+    parser.add_argument("agenda_file", help="Path to the agenda .txt file")
+    parser.add_argument("--chime", action="store_true", help="Play a chime when each new topic is about to begin")
+    args = parser.parse_args()
 
-    agenda_file = sys.argv[1]
-    agenda = load_agenda_from_file(agenda_file)
+    agenda = load_agenda_from_file(args.agenda_file)
 
     app = QApplication(sys.argv)
-    timer = TopicTimer(agenda)
+    timer = TopicTimer(agenda, play_chime=args.chime)
     timer.show()
     sys.exit(app.exec())
 
